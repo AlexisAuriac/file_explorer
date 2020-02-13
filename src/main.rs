@@ -94,6 +94,7 @@ fn main() -> io::Result<()> {
             .on_submit(change_dir)
             .with_all_str(entry_names)
             .with_name("select")
+            .scrollable()
             .fixed_size((30, 20)),
     )
     .title(pwd.to_str().unwrap())
