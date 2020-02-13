@@ -11,8 +11,8 @@ fn hide_hidden_files(entries: Vec<DirEntry>) -> Vec<DirEntry> {
         .collect::<Vec<_>>()
 }
 
-fn entry_to_string_metadata(entries: Vec<DirEntry>) -> Vec<(String, bool)> {
-    entries
+fn entry_to_string(entries: Vec<DirEntry>) -> Vec<(String, bool)> {
+    let mut entries = entries
         .iter()
         .map(|entry| {
             (
@@ -20,7 +20,10 @@ fn entry_to_string_metadata(entries: Vec<DirEntry>) -> Vec<(String, bool)> {
                 entry.metadata().unwrap().is_dir(),
             )
         })
-        .collect::<Vec<_>>()
+        .collect::<Vec<_>>();
+    entries.sort_by(|a, b| a.cmp(b));
+
+    entries
 }
 
 fn insert_current_parent_dir(entries: &mut Vec<(String, bool)>) {
@@ -37,7 +40,7 @@ pub fn get_cwd_content(show_hidden: bool) -> Result<Vec<(String, bool)>, io::Err
         entries
     };
 
-    let mut entries = entry_to_string_metadata(entries);
+    let mut entries = entry_to_string(entries);
     insert_current_parent_dir(&mut entries);
 
     Ok(entries)
