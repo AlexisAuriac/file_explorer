@@ -7,3 +7,4 @@ edition = "2018"
 [dependencies]
 cursive = "0.14.0"
 argh = "0.1.3"
+enumset = "0.4.4"

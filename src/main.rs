@@ -15,6 +15,9 @@ use get_cwd_content::get_cwd_content;
 use get_pwd::get_pwd;
 
 use argh::FromArgs;
+use cursive::theme::{Effect, Style};
+use cursive::utils::markup::StyledString;
+use enumset::EnumSet;
 
 #[derive(FromArgs, Debug)]
 /// A terminal file explorer
@@ -25,12 +28,25 @@ struct Args {
 }
 
 fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<()> {
+    let dir_style = Style {
+        effects: EnumSet::only(Effect::Italic).union(EnumSet::only(Effect::Bold)),
+        color: None,
+    };
+
     let entries = get_cwd_content(".", show_hidden)?;
+    let mut select = SelectView::<String>::new();
+
+    for (name, is_dir) in entries {
+        if is_dir {
+            select.add_item(StyledString::styled(&name, dir_style), name);
+        } else {
+            select.add_item(name.clone(), name);
+        }
+    }
 
     let select = Dialog::around(
-        SelectView::<String>::new()
+        select
             .on_submit(move |s, name| change_dir(s, name, show_hidden))
-            .with_all_str(entries)
             .with_name("select")
             .scrollable()
             .fixed_size((30, 20)),
