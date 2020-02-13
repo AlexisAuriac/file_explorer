@@ -17,12 +17,10 @@ use get_pwd::get_pwd;
 fn initialize_content_select(s: &mut Cursive) -> io::Result<()> {
     let entries = get_cwd_content(".", true)?;
 
-    let entry_names = entries.iter().map(|(name, _)| name).collect::<Vec<_>>();
-
     let select = Dialog::around(
         SelectView::<String>::new()
             .on_submit(change_dir)
-            .with_all_str(entry_names)
+            .with_all_str(entries)
             .with_name("select")
             .scrollable()
             .fixed_size((30, 20)),

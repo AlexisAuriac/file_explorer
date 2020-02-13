@@ -28,11 +28,10 @@ fn update_title(s: &mut Cursive) {
 
 fn update_content(s: &mut Cursive) {
     let entries = get_cwd_content(".", true).unwrap();
-    let entry_names = entries.iter().map(|(name, _)| name).collect::<Vec<_>>();
     let mut select = s.find_name::<SelectView<String>>("select").unwrap();
 
     select.clear();
-    select.add_all_str(entry_names);
+    select.add_all_str(entries);
 }
 
 pub fn change_dir(s: &mut Cursive, name: &str) {

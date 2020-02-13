@@ -1,6 +1,5 @@
-use std::fs::{read_dir, DirEntry, File, Metadata};
+use std::fs::{read_dir, DirEntry};
 use std::io;
-use std::path::PathBuf;
 
 fn hide_hidden_files(entries: Vec<DirEntry>) -> Vec<DirEntry> {
     entries
@@ -12,36 +11,19 @@ fn hide_hidden_files(entries: Vec<DirEntry>) -> Vec<DirEntry> {
         .collect::<Vec<_>>()
 }
 
-fn entry_to_string_metadata(entries: Vec<DirEntry>) -> Vec<(String, Metadata)> {
+fn entry_to_string_metadata(entries: Vec<DirEntry>) -> Vec<String> {
     entries
         .iter()
-        .map(|entry| {
-            (
-                entry.file_name().to_str().unwrap().to_string(),
-                entry.metadata().unwrap(),
-            )
-        })
+        .map(|entry| entry.file_name().to_str().unwrap().to_string())
         .collect::<Vec<_>>()
 }
 
-fn insert_current_parent_dir(entries: &mut Vec<(String, Metadata)>) {
-    entries.insert(
-        0,
-        (
-            "..".to_string(),
-            File::open(PathBuf::from("..")).unwrap().metadata().unwrap(),
-        ),
-    );
-    entries.insert(
-        0,
-        (
-            ".".to_string(),
-            File::open(PathBuf::from(".")).unwrap().metadata().unwrap(),
-        ),
-    );
+fn insert_current_parent_dir(entries: &mut Vec<String>) {
+    entries.insert(0, "..".to_string());
+    entries.insert(0, ".".to_string());
 }
 
-pub fn get_cwd_content(path: &str, hide: bool) -> Result<Vec<(String, Metadata)>, io::Error> {
+pub fn get_cwd_content(path: &str, hide: bool) -> Result<Vec<String>, io::Error> {
     let entries = read_dir(path)?.collect::<Result<Vec<_>, io::Error>>()?;
 
     let entries = if hide {
