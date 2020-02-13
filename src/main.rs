@@ -64,16 +64,12 @@ fn update_title(s: &mut Cursive) {
 }
 
 fn update_content(s: &mut Cursive) {
-    let entries = get_cwd_content(".", false).unwrap();
+    let entries = get_cwd_content(".", true).unwrap();
     let entry_names = entries.iter().map(|(name, _)| name).collect::<Vec<_>>();
     let mut select = s.find_name::<SelectView<String>>("select").unwrap();
 
     select.clear();
     select.add_all_str(entry_names);
-}
-
-fn exec_command(s: &mut Cursive, _: &str) {
-    s.quit();
 }
 
 fn change_dir(s: &mut Cursive, name: &str) {
@@ -86,7 +82,7 @@ fn change_dir(s: &mut Cursive, name: &str) {
         s.add_layer(
             Dialog::around(
                 EditView::new()
-                    .on_submit(exec_command)
+                    .on_submit(|s, _| s.quit())
                     .with_name("edit_cmd"),
             )
             .title("Exec command"),
@@ -100,13 +96,38 @@ fn change_dir(s: &mut Cursive, name: &str) {
     update_content(s);
 }
 
+fn exec_command(file: &str, cmd: &str) {
+    let parts = cmd.split_whitespace().collect::<Vec<_>>();
+
+    match &parts[..] {
+        [] => eprintln!("Empty command"),
+        [cmd] => {
+            if let Err(err) = std::process::Command::new(cmd).arg(file).status() {
+                eprintln!("{}: {}", cmd, err);
+            }
+        }
+        _ => {
+            let cmd = parts[0];
+            let args = &parts[1..];
+
+            if let Err(err) = std::process::Command::new(cmd)
+                .args(args)
+                .arg(file)
+                .status()
+            {
+                eprintln!("{}: {}", cmd, err);
+            }
+        }
+    }
+}
+
 fn main() -> io::Result<()> {
     let pwd = PathBuf::from(".");
     let pwd = fs::canonicalize(pwd)?;
 
     let mut siv = Cursive::default();
 
-    let entries = get_cwd_content(".", false)?;
+    let entries = get_cwd_content(".", true)?;
 
     let entry_names = entries.iter().map(|(name, _)| name).collect::<Vec<_>>();
 
@@ -127,9 +148,6 @@ fn main() -> io::Result<()> {
 
     siv.run();
 
-    let pwd = PathBuf::from(".");
-    let pwd = fs::canonicalize(pwd).unwrap();
-
     let edit = siv.find_name::<EditView>("edit_cmd");
 
     if edit.is_none() {
@@ -146,9 +164,7 @@ fn main() -> io::Result<()> {
 
     drop(siv);
 
-    println!("pwd: {:?}", pwd);
-    println!("cmd: {:?}", cmd);
-    println!("file: {:?}", std::fs::File::open(PathBuf::from(file)));
+    exec_command(&file, &cmd);
 
     Ok(())
 }
