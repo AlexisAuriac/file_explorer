@@ -12,14 +12,32 @@ use enumset::EnumSet;
 use crate::get_cwd_content::get_cwd_content;
 use crate::get_pwd::get_pwd;
 
+fn submit_command(s: &mut Cursive, cmd: &str) {
+    if cmd.trim() != "" {
+        s.quit();
+    } else {
+        s.pop_layer();
+        s.add_layer(Dialog::info("Empty command"));
+    }
+}
+
 fn get_command_edit_view(s: &mut Cursive) {
     s.add_layer(
         Dialog::around(
             EditView::new()
-                .on_submit(|s, _| s.quit())
+                .on_submit(submit_command)
                 .with_name("edit_cmd"),
         )
-        .title("Exec command"),
+        .title("Exec command")
+        .button("Cancel", |s| {
+            s.pop_layer();
+        })
+        .button("Ok", |s| {
+            let name = s
+                .call_on_name("name", |view: &mut EditView| view.get_content())
+                .unwrap();
+            submit_command(s, &name);
+        }),
     );
 }
 
@@ -30,7 +48,7 @@ fn update_title(s: &mut Cursive) {
 }
 
 fn update_content(s: &mut Cursive, show_hidden: bool) {
-    let entries = get_cwd_content(".", show_hidden).unwrap();
+    let entries = get_cwd_content(show_hidden).unwrap();
     let mut select = s.find_name::<SelectView<String>>("select").unwrap();
 
     let dir_style = Style {

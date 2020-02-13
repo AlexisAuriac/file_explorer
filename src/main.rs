@@ -33,7 +33,7 @@ fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<(
         color: None,
     };
 
-    let entries = get_cwd_content(".", show_hidden)?;
+    let entries = get_cwd_content(show_hidden)?;
     let mut select = SelectView::<String>::new();
 
     for (name, is_dir) in entries {
