@@ -73,6 +73,16 @@ fn update_content(s: &mut Cursive) {
 }
 
 fn change_dir(s: &mut Cursive, name: &str) {
+    let metadata = std::fs::File::open(PathBuf::from(name))
+        .unwrap()
+        .metadata()
+        .unwrap();
+
+    if !metadata.is_dir() {
+        s.add_layer(Dialog::info(format!("{}: Not a directory", name)));
+        return;
+    }
+
     std::env::set_current_dir(PathBuf::from(name)).unwrap();
 
     update_title(s);
