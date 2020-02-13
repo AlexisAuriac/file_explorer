@@ -14,12 +14,22 @@ use exec_command::exec_command;
 use get_cwd_content::get_cwd_content;
 use get_pwd::get_pwd;
 
-fn initialize_content_select(s: &mut Cursive) -> io::Result<()> {
-    let entries = get_cwd_content(".", true)?;
+use argh::FromArgs;
+
+#[derive(FromArgs, Debug)]
+/// A terminal file explorer
+struct Args {
+    /// show hidden files
+    #[argh(switch, short = 's')]
+    pub show_hidden: bool,
+}
+
+fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<()> {
+    let entries = get_cwd_content(".", show_hidden)?;
 
     let select = Dialog::around(
         SelectView::<String>::new()
-            .on_submit(change_dir)
+            .on_submit(move |s, name| change_dir(s, name, show_hidden))
             .with_all_str(entries)
             .with_name("select")
             .scrollable()
@@ -52,9 +62,11 @@ fn get_selected_file(s: &mut Cursive) -> String {
 }
 
 fn main() -> io::Result<()> {
+    let args: Args = argh::from_env();
+
     let mut siv = Cursive::default();
 
-    initialize_content_select(&mut siv)?;
+    initialize_content_select(&mut siv, args.show_hidden)?;
     initialize_events(&mut siv);
 
     siv.run();

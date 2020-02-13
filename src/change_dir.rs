@@ -26,15 +26,15 @@ fn update_title(s: &mut Cursive) {
     dialog.set_title(get_pwd());
 }
 
-fn update_content(s: &mut Cursive) {
-    let entries = get_cwd_content(".", true).unwrap();
+fn update_content(s: &mut Cursive, show_hidden: bool) {
+    let entries = get_cwd_content(".", show_hidden).unwrap();
     let mut select = s.find_name::<SelectView<String>>("select").unwrap();
 
     select.clear();
     select.add_all_str(entries);
 }
 
-pub fn change_dir(s: &mut Cursive, name: &str) {
+pub fn change_dir(s: &mut Cursive, name: &str, show_hidden: bool) {
     let metadata = File::open(PathBuf::from(name)).unwrap().metadata().unwrap();
 
     if !metadata.is_dir() {
@@ -45,5 +45,5 @@ pub fn change_dir(s: &mut Cursive, name: &str) {
     set_current_dir(PathBuf::from(name)).unwrap();
 
     update_title(s);
-    update_content(s);
+    update_content(s, show_hidden);
 }

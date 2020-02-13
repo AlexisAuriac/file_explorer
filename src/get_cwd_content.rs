@@ -23,10 +23,10 @@ fn insert_current_parent_dir(entries: &mut Vec<String>) {
     entries.insert(0, ".".to_string());
 }
 
-pub fn get_cwd_content(path: &str, hide: bool) -> Result<Vec<String>, io::Error> {
+pub fn get_cwd_content(path: &str, show_hidden: bool) -> Result<Vec<String>, io::Error> {
     let entries = read_dir(path)?.collect::<Result<Vec<_>, io::Error>>()?;
 
-    let entries = if hide {
+    let entries = if !show_hidden {
         hide_hidden_files(entries)
     } else {
         entries
