@@ -1,4 +1,4 @@
-use std::fs::DirEntry;
+use std::fs::Metadata;
 use std::path::PathBuf;
 use std::{fs, io};
 
@@ -6,7 +6,7 @@ use cursive::traits::*;
 use cursive::views::{Dialog, SelectView};
 use cursive::Cursive;
 
-fn get_cwd_content(path: &str, hide: bool) -> Result<Vec<DirEntry>, io::Error> {
+fn get_cwd_content(path: &str, hide: bool) -> Result<Vec<(String, Metadata)>, io::Error> {
     let entries = fs::read_dir(path)?.collect::<Result<Vec<_>, io::Error>>()?;
 
     let entries = if hide {
@@ -21,6 +21,37 @@ fn get_cwd_content(path: &str, hide: bool) -> Result<Vec<DirEntry>, io::Error> {
         entries
     };
 
+    let mut entries = entries
+        .iter()
+        .map(|entry| {
+            (
+                entry.file_name().to_str().unwrap().to_string(),
+                entry.metadata().unwrap(),
+            )
+        })
+        .collect::<Vec<_>>();
+
+    entries.insert(
+        0,
+        (
+            "..".to_string(),
+            std::fs::File::open(PathBuf::from(".."))
+                .unwrap()
+                .metadata()
+                .unwrap(),
+        ),
+    );
+    entries.insert(
+        0,
+        (
+            ".".to_string(),
+            std::fs::File::open(PathBuf::from("."))
+                .unwrap()
+                .metadata()
+                .unwrap(),
+        ),
+    );
+
     Ok(entries)
 }
 
@@ -34,10 +65,7 @@ fn update_title(s: &mut Cursive) {
 
 fn update_content(s: &mut Cursive) {
     let entries = get_cwd_content(".", false).unwrap();
-    let entry_names = entries
-        .iter()
-        .map(|file| file.file_name().to_str().unwrap().to_string())
-        .collect::<Vec<_>>();
+    let entry_names = entries.iter().map(|(name, _)| name).collect::<Vec<_>>();
     let mut select = s.find_name::<SelectView<String>>("select").unwrap();
 
     select.clear();
@@ -59,13 +87,7 @@ fn main() -> io::Result<()> {
 
     let entries = get_cwd_content(".", false)?;
 
-    let entry_names = entries
-        .iter()
-        .map(|file| file.file_name().to_str().unwrap().to_string())
-        .collect::<Vec<_>>();
-
-    println!("{:?}", entries);
-    println!("{:?}", entry_names);
+    let entry_names = entries.iter().map(|(name, _)| name).collect::<Vec<_>>();
 
     let select = Dialog::around(
         SelectView::<String>::new()
