@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::{fs, io};
 
 use cursive::traits::*;
-use cursive::views::{Dialog, SelectView};
+use cursive::views::{Dialog, EditView, SelectView};
 use cursive::Cursive;
 
 fn get_cwd_content(path: &str, hide: bool) -> Result<Vec<(String, Metadata)>, io::Error> {
@@ -72,6 +72,10 @@ fn update_content(s: &mut Cursive) {
     select.add_all_str(entry_names);
 }
 
+fn exec_command(s: &mut Cursive, _: &str) {
+    s.quit();
+}
+
 fn change_dir(s: &mut Cursive, name: &str) {
     let metadata = std::fs::File::open(PathBuf::from(name))
         .unwrap()
@@ -79,7 +83,14 @@ fn change_dir(s: &mut Cursive, name: &str) {
         .unwrap();
 
     if !metadata.is_dir() {
-        s.add_layer(Dialog::info(format!("{}: Not a directory", name)));
+        s.add_layer(
+            Dialog::around(
+                EditView::new()
+                    .on_submit(exec_command)
+                    .with_name("edit_cmd"),
+            )
+            .title("Exec command"),
+        );
         return;
     }
 
@@ -115,6 +126,29 @@ fn main() -> io::Result<()> {
     siv.add_global_callback('q', |s| s.quit());
 
     siv.run();
+
+    let pwd = PathBuf::from(".");
+    let pwd = fs::canonicalize(pwd).unwrap();
+
+    let edit = siv.find_name::<EditView>("edit_cmd");
+
+    if edit.is_none() {
+        return Ok(());
+    }
+
+    let cmd = edit.unwrap().get_content().to_string();
+    let file = siv
+        .find_name::<SelectView<String>>("select")
+        .unwrap()
+        .selection()
+        .unwrap()
+        .to_string();
+
+    drop(siv);
+
+    println!("pwd: {:?}", pwd);
+    println!("cmd: {:?}", cmd);
+    println!("file: {:?}", std::fs::File::open(PathBuf::from(file)));
 
     Ok(())
 }
