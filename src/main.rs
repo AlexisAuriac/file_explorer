@@ -17,7 +17,7 @@ mod get_dir_fullname;
 mod state;
 mod update_window;
 
-use change_dir::change_dir;
+use change_dir::{cd_parent, change_dir, refresh};
 use exec_command::exec_command;
 use get_command::get_command;
 use get_cwd_content::get_cwd_content;
@@ -73,13 +73,13 @@ fn initialize_events(s: &mut Cursive) {
     s.add_global_callback('q', |s| s.quit());
     s.add_global_callback(' ', get_command);
 
-    s.add_global_callback(Key::Backspace, |s| change_dir(s, ".."));
+    s.add_global_callback(Key::Backspace, |s| cd_parent(s));
 
     s.add_global_callback('s', move |s| {
         let state = s.user_data::<State>().unwrap();
 
         state.show_hidden = !state.show_hidden;
-        change_dir(s, ".");
+        refresh(s);
     });
 }
 

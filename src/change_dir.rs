@@ -21,3 +21,11 @@ pub fn change_dir(s: &mut Cursive, name: &str) {
     set_current_dir(PathBuf::from(name)).unwrap();
     update_window(s, show_hidden);
 }
+
+pub fn refresh(s: &mut Cursive) {
+    change_dir(s, ".");
+}
+
+pub fn cd_parent(s: &mut Cursive) {
+    change_dir(s, "..");
+}
