@@ -1,23 +1,25 @@
 use std::io;
 
+use argh::FromArgs;
+use cursive::theme::{Effect, Style};
 use cursive::traits::*;
+use cursive::utils::markup::StyledString;
 use cursive::views::{Dialog, EditView, SelectView};
 use cursive::Cursive;
+use enumset::EnumSet;
 
 mod change_dir;
 mod exec_command;
+mod get_command;
 mod get_cwd_content;
-mod get_pwd;
+mod get_dir_fullname;
+mod update_window;
 
 use change_dir::change_dir;
 use exec_command::exec_command;
+use get_command::get_command;
 use get_cwd_content::get_cwd_content;
-use get_pwd::get_pwd;
-
-use argh::FromArgs;
-use cursive::theme::{Effect, Style};
-use cursive::utils::markup::StyledString;
-use enumset::EnumSet;
+use get_dir_fullname::get_dir_fullname;
 
 #[derive(FromArgs, Debug)]
 /// A terminal file explorer
@@ -25,6 +27,9 @@ struct Args {
     /// show hidden files
     #[argh(switch, short = 's')]
     pub show_hidden: bool,
+    /// directory to start in
+    #[argh(option)]
+    pub starting_dir: Option<String>,
 }
 
 fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<()> {
@@ -51,7 +56,7 @@ fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<(
             .scrollable()
             .fixed_size((30, 20)),
     )
-    .title(get_pwd())
+    .title(get_dir_fullname("."))
     .with_name("dialog");
 
     s.add_layer(select);
@@ -61,6 +66,7 @@ fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<(
 
 fn initialize_events(s: &mut Cursive) {
     s.add_global_callback('q', |s| s.quit());
+    s.add_global_callback(' ', get_command);
 }
 
 fn get_cmd(s: &mut Cursive) -> Option<String> {
