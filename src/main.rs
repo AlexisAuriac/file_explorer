@@ -56,7 +56,7 @@ fn initialize_content_select(s: &mut Cursive) -> io::Result<()> {
 
     let select = Dialog::around(
         select
-            .on_submit(move |s, name| change_dir(s, name, show_hidden))
+            .on_submit(move |s, name| change_dir(s, name))
             .with_name("select")
             .scrollable()
             .fixed_size((30, 20)),
@@ -73,10 +73,13 @@ fn initialize_events(s: &mut Cursive) {
     s.add_global_callback('q', |s| s.quit());
     s.add_global_callback(' ', get_command);
 
-    s.add_global_callback(Key::Backspace, move |s| {
-        let show_hidden = s.user_data::<State>().unwrap().show_hidden;
+    s.add_global_callback(Key::Backspace, |s| change_dir(s, ".."));
 
-        change_dir(s, "..", show_hidden)
+    s.add_global_callback('s', move |s| {
+        let state = s.user_data::<State>().unwrap();
+
+        state.show_hidden = !state.show_hidden;
+        change_dir(s, ".");
     });
 }
 

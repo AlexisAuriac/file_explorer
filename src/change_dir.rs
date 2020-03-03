@@ -5,15 +5,18 @@ use std::path::PathBuf;
 use cursive::views::Dialog;
 use cursive::Cursive;
 
+use crate::state::State;
 use crate::update_window::update_window;
 
-pub fn change_dir(s: &mut Cursive, name: &str, show_hidden: bool) {
+pub fn change_dir(s: &mut Cursive, name: &str) {
     let metadata = File::open(PathBuf::from(name)).unwrap().metadata().unwrap();
 
     if !metadata.is_dir() {
         s.add_layer(Dialog::info("Not a directory"));
         return;
     }
+
+    let show_hidden = s.user_data::<State>().unwrap().show_hidden;
 
     set_current_dir(PathBuf::from(name)).unwrap();
     update_window(s, show_hidden);
