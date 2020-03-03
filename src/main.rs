@@ -14,6 +14,7 @@ mod exec_command;
 mod get_command;
 mod get_cwd_content;
 mod get_dir_fullname;
+mod state;
 mod update_window;
 
 use change_dir::change_dir;
@@ -21,6 +22,7 @@ use exec_command::exec_command;
 use get_command::get_command;
 use get_cwd_content::get_cwd_content;
 use get_dir_fullname::get_dir_fullname;
+use state::State;
 
 #[derive(FromArgs, Debug)]
 /// A terminal file explorer
@@ -33,7 +35,9 @@ struct Args {
     pub starting_dir: Option<String>,
 }
 
-fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<()> {
+fn initialize_content_select(s: &mut Cursive) -> io::Result<()> {
+    let show_hidden = s.user_data::<State>().unwrap().show_hidden;
+
     let dir_style = Style {
         effects: EnumSet::only(Effect::Italic).union(EnumSet::only(Effect::Bold)),
         color: None,
@@ -65,10 +69,15 @@ fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<(
     Ok(())
 }
 
-fn initialize_events(s: &mut Cursive, show_hidden: bool) {
+fn initialize_events(s: &mut Cursive) {
     s.add_global_callback('q', |s| s.quit());
     s.add_global_callback(' ', get_command);
-    s.add_global_callback(Key::Backspace, move |s| change_dir(s, "..", show_hidden));
+
+    s.add_global_callback(Key::Backspace, move |s| {
+        let show_hidden = s.user_data::<State>().unwrap().show_hidden;
+
+        change_dir(s, "..", show_hidden)
+    });
 }
 
 fn get_cmd(s: &mut Cursive) -> Option<String> {
@@ -90,8 +99,9 @@ fn main() -> io::Result<()> {
 
     let mut siv = Cursive::default();
 
-    initialize_content_select(&mut siv, args.show_hidden)?;
-    initialize_events(&mut siv, args.show_hidden);
+    siv.set_user_data(State::new(args.show_hidden));
+    initialize_content_select(&mut siv)?;
+    initialize_events(&mut siv);
 
     siv.run();
 
