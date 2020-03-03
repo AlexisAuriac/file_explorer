@@ -1,6 +1,7 @@
 use std::io;
 
 use argh::FromArgs;
+use cursive::event::Key;
 use cursive::theme::{Effect, Style};
 use cursive::traits::*;
 use cursive::utils::markup::StyledString;
@@ -64,9 +65,10 @@ fn initialize_content_select(s: &mut Cursive, show_hidden: bool) -> io::Result<(
     Ok(())
 }
 
-fn initialize_events(s: &mut Cursive) {
+fn initialize_events(s: &mut Cursive, show_hidden: bool) {
     s.add_global_callback('q', |s| s.quit());
     s.add_global_callback(' ', get_command);
+    s.add_global_callback(Key::Backspace, move |s| change_dir(s, "..", show_hidden));
 }
 
 fn get_cmd(s: &mut Cursive) -> Option<String> {
@@ -89,7 +91,7 @@ fn main() -> io::Result<()> {
     let mut siv = Cursive::default();
 
     initialize_content_select(&mut siv, args.show_hidden)?;
-    initialize_events(&mut siv);
+    initialize_events(&mut siv, args.show_hidden);
 
     siv.run();
 
