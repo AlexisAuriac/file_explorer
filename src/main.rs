@@ -9,18 +9,19 @@ use cursive::views::{Dialog, EditView, SelectView};
 use cursive::Cursive;
 
 mod change_dir;
+mod dialog_res;
 mod exec_command;
 mod get_command;
 mod get_cwd_content;
-mod get_dir_fullname;
+mod get_file_full_name;
 mod state;
 mod update_window;
 
 use change_dir::{cd_parent, change_dir, refresh};
+use dialog_res::dialog_res;
 use exec_command::exec_command;
 use get_command::get_command;
-
-use get_dir_fullname::get_dir_fullname;
+use get_file_full_name::get_cwd_full_name;
 use state::State;
 
 #[derive(FromArgs, Debug)]
@@ -39,20 +40,20 @@ fn initialize_content_select(s: &mut Cursive, start: Option<String>) -> io::Resu
 
     let select = Dialog::around(
         select
-            .on_submit(move |s, name| change_dir(s, name))
+            .on_submit(move |s, name| dialog_res(change_dir(s, name), s))
             .with_name("select")
             .scrollable()
             .fixed_size((30, 20)),
     )
-    .title(get_dir_fullname("."))
+    .title(get_cwd_full_name().unwrap_or_else(|err| err))
     .with_name("dialog");
 
     s.add_layer(select);
 
     if let Some(dir) = start {
-        change_dir(s, &dir);
+        dialog_res(change_dir(s, &dir), s);
     } else {
-        refresh(s);
+        dialog_res(refresh(s), s);
     }
 
     Ok(())
@@ -62,13 +63,13 @@ fn initialize_events(s: &mut Cursive) {
     s.add_global_callback('q', |s| s.quit());
     s.add_global_callback(' ', get_command);
 
-    s.add_global_callback(Key::Backspace, |s| cd_parent(s));
+    s.add_global_callback(Key::Backspace, |s| dialog_res(cd_parent(s), s));
 
     s.add_global_callback('s', move |s| {
         let state = s.user_data::<State>().unwrap();
 
         state.show_hidden = !state.show_hidden;
-        refresh(s);
+        dialog_res(refresh(s), s);
     });
 }
 

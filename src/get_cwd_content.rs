@@ -11,19 +11,23 @@ fn hide_hidden_files(entries: Vec<DirEntry>) -> Vec<DirEntry> {
         .collect::<Vec<_>>()
 }
 
-fn entry_to_string(entries: Vec<DirEntry>) -> Vec<(String, bool)> {
+fn entry_to_string(entry: &DirEntry) -> io::Result<(String, bool)> {
+    let name = match entry.file_name().to_str() {
+        Some(name) => name.to_string(),
+        None => "Invalid UTF-8 name".to_string(),
+    };
+
+    Ok((name, entry.metadata()?.is_dir()))
+}
+
+fn entries_to_string(entries: Vec<DirEntry>) -> Result<Vec<(String, bool)>, io::Error> {
     let mut entries = entries
         .iter()
-        .map(|entry| {
-            (
-                entry.file_name().to_str().unwrap().to_string(),
-                entry.metadata().unwrap().is_dir(),
-            )
-        })
-        .collect::<Vec<_>>();
+        .map(entry_to_string)
+        .collect::<io::Result<Vec<_>>>()?;
     entries.sort_by(|a, b| a.cmp(b));
 
-    entries
+    Ok(entries)
 }
 
 fn insert_current_parent_dir(entries: &mut Vec<(String, bool)>) {
@@ -40,7 +44,7 @@ pub fn get_cwd_content(show_hidden: bool) -> Result<Vec<(String, bool)>, io::Err
         entries
     };
 
-    let mut entries = entry_to_string(entries);
+    let mut entries = entries_to_string(entries)?;
     insert_current_parent_dir(&mut entries);
 
     Ok(entries)

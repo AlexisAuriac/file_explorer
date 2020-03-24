@@ -4,17 +4,18 @@ use cursive::views::{Dialog, SelectView};
 use cursive::Cursive;
 use enumset::EnumSet;
 
+use crate::dialog_res::dialog_res;
 use crate::get_cwd_content::get_cwd_content;
-use crate::get_dir_fullname::get_dir_fullname;
+use crate::get_file_full_name::get_cwd_full_name;
 
 fn update_title(s: &mut Cursive) {
     let mut dialog = s.find_name::<Dialog>("dialog").unwrap();
 
-    dialog.set_title(get_dir_fullname("."));
+    dialog.set_title(get_cwd_full_name().unwrap_or_else(|err| err));
 }
 
-fn update_content(s: &mut Cursive, show_hidden: bool) {
-    let entries = get_cwd_content(show_hidden).unwrap();
+fn update_content(s: &mut Cursive, show_hidden: bool) -> Result<(), String> {
+    let entries = get_cwd_content(show_hidden).map_err(|err| err.to_string())?;
     let mut select = s.find_name::<SelectView<String>>("select").unwrap();
 
     let dir_style = Style {
@@ -31,9 +32,12 @@ fn update_content(s: &mut Cursive, show_hidden: bool) {
             select.add_item(name.clone(), name);
         }
     }
+
+    Ok(())
 }
 
 pub fn update_window(s: &mut Cursive, show_hidden: bool) {
     update_title(s);
-    update_content(s, show_hidden);
+
+    dialog_res(update_content(s, show_hidden), s);
 }
