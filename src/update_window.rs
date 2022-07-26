@@ -1,8 +1,8 @@
-use cursive::theme::{Effect, Style};
+use cursive::reexports::enumset::EnumSet;
+use cursive::theme::{ColorStyle, Effect, Style};
 use cursive::utils::markup::StyledString;
 use cursive::views::{Dialog, SelectView};
 use cursive::Cursive;
-use enumset::EnumSet;
 
 use crate::dialog_res::dialog_res;
 use crate::get_cwd_content::get_cwd_content;
@@ -20,7 +20,7 @@ fn update_content(s: &mut Cursive, show_hidden: bool) -> Result<(), String> {
 
     let dir_style = Style {
         effects: EnumSet::only(Effect::Italic).union(EnumSet::only(Effect::Bold)),
-        color: None,
+        color: ColorStyle::inherit_parent(),
     };
 
     select.clear();

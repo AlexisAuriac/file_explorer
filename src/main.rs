@@ -1,9 +1,10 @@
 use std::io;
 
 use argh::FromArgs;
-use cursive::event::Key;
 
+use cursive::event::Key;
 use cursive::traits::*;
+use cursive::CursiveExt;
 
 use cursive::views::{Dialog, EditView, SelectView};
 use cursive::Cursive;
